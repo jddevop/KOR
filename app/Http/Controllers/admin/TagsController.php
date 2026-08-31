@@ -1,0 +1,169 @@
+<?php
+
+namespace App\Http\Controllers\admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use App\Models\Tags;
+use Validator;
+use DB;
+use Session;
+use Hash;
+use Illuminate\Support\Facades\Storage;
+class TagsController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $main_menu='settings';
+		$sub_menu='tags';
+        $view_data=Tags::orderBy('id', 'desc')->get();
+        return view('admin.view_tags',['main_menu'=>$main_menu,'sub_menu'=>$sub_menu,'view_data' => $view_data]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        $main_menu='settings';
+		$sub_menu='tags'; 
+	    $mode='Add';
+		
+	
+				
+		return view('admin.add_tags',['main_menu'=>$main_menu,'sub_menu'=>$sub_menu,'mode'=>$mode]); 
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+	 public function store(Request $request)
+    {
+        $input = $request->all();
+		
+		$rules['name'] = 'required';
+		$messages['name.required']='Name is required';
+		
+		$rules['color'] = 'required';
+		$messages['color.required']='Color is required';
+		
+		$validator = Validator::make($input, $rules,$messages);
+		if ($validator->passes()) {
+			$name = $request->name;
+			$color = $request->color;
+
+			$ins=new Tags;
+			$ins->name=$name;
+			$ins->color=$color;
+			if($ins->save())
+			{
+				return redirect('admin/tags')->with('success', 'Tags added successfully.');
+			}else{
+				return redirect('admin/tags')->with('error', 'Tags added fail.');
+			}
+		}else{
+			return redirect()->back()
+                        ->withErrors($validator)
+                        ->withInput();
+		}
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        $main_menu='settings';
+		$sub_menu='tags'; 
+	    $mode='Edit';
+	   
+	   $data=Tags::find($id);
+	   
+	   
+	   return view('admin.add_tags',['main_menu'=>$main_menu,'sub_menu'=>$sub_menu,'mode'=>$mode,'data'=>$data]);  
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        if($request->isMethod('PATCH')){
+			$input = $request->all();
+		   if($id > 12){
+			$rules['name'] = 'required';
+			$messages['name.required']='Name is required';
+		   }
+			$rules['color'] = 'required';
+			$messages['color.required']='Color is required';
+
+		
+			$validator = Validator::make($input, $rules,$messages);
+			if ($validator->passes()) {	
+				$name = $request->name;
+				$color = $request->color;
+				
+				$data=Tags::find($id);
+				if($id > 12){
+				    $data->name=$name;
+				}
+				$data->color=$color;
+				$data->save();
+				return redirect('admin/tags')->with('success', 'Tags updated successfully.');
+			}else{
+				return redirect()->back()
+                        ->withErrors($validator)
+                        ->withInput();
+			}
+		}else{
+			return back()->with('error', 'Invalid request');
+		  }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        $data = Tags::find($id); 
+        if($data->delete()){          
+            $result = array('status' => true, 'message' => 'Success!', 'result' => '');
+        }else{
+          $result = array('status' => false, 'message' => 'Fail!', 'result' => '');  
+        }
+        echo json_encode($result);
+        exit;
+    }
+}
